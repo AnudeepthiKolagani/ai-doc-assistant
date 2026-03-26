@@ -2,7 +2,7 @@ import { CloudUpload, UploadCloud } from "lucide-react";
 import Logo from "./Logo";
 import { useRef, useState } from "react";
 
-const Upload = () => {
+const UploadFile = () => {
   const inputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [inValidFiles, setInValidFiles] = useState([{}]);
@@ -106,4 +106,4 @@ const Upload = () => {
   );
 };
 
-export default Upload;
+export default UploadFile;

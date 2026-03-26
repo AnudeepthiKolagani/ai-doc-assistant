@@ -1,6 +1,6 @@
 const Logo = () => {
   return (
-    <div className="flex gap-1 items-center">
+    <div className="flex gap-1 items-center bg-white">
       <img
         src="/google-notebook-lm-logo.jpg"
         alt="App logo"
