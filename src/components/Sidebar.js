@@ -1,16 +1,15 @@
+import { useSelector } from "react-redux";
 import Logo from "./Logo";
-import mockFiles from "../utils/mockFiles";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
-  const [files, setFiles] = useState(mockFiles);
+  const files = useSelector((state) => state.File.files);
   const today = new Date().toDateString();
 
-  const todayFiles = files.filter(
+  const todayFiles = files?.filter(
     (file) => new Date(file.uploadedAt).toDateString() === today,
   );
-  const previousFiles = files.filter(
+  const previousFiles = files?.filter(
     (file) => new Date(file.uploadedAt).toDateString() !== today,
   );
 
