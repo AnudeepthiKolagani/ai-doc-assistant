@@ -1,6 +1,7 @@
-import { CloudUpload, UploadCloud } from "lucide-react";
+import { CloudUpload } from "lucide-react";
 import Logo from "./Logo";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 
 const UploadFile = () => {
   const inputRef = useRef(null);
@@ -8,8 +9,29 @@ const UploadFile = () => {
   const [inValidFiles, setInValidFiles] = useState([{}]);
 
   const MAX_SIZE = 2 * 1024 * 1024;
+  const apiURL = process.env.REACT_APP_API_URL;
 
   const allowedTypes = ["application/pdf", "text/plain", "application/msword"];
+
+  useEffect(() => {
+    handleAddFiles();
+  }, [selectedFiles]);
+
+  const handleAddFiles = async () => {
+    if (selectedFiles.length === 0) return;
+
+    // Creating form data
+    const formData = new FormData();
+    selectedFiles.forEach((selectedFile) =>
+      formData.append("file", selectedFile),
+    );
+
+    const res = await axios.post(`${apiURL}/upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  };
 
   const handleBrowseFiles = () => {
     inputRef.current.click();
