@@ -26,12 +26,12 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-[15vw] bg-gray-100 min-h-screen h-full flex flex-col gap-4 px-4">
+    <div className="hidden lg:flex w-full lg:w-[15vw] bg-gray-100 min-h-screen h-full flex-col gap-4 px-4">
       <Logo />
-      <div>
+      <div className="flex justify-center">
         <Link
           to="/upload-file"
-          className="bg-black px-8 py-1 rounded-lg text-white"
+          className="bg-black px-8 py-1 rounded-lg text-white text-sm"
         >
           {" "}
           + Create New
