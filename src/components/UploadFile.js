@@ -14,30 +14,70 @@ const UploadFile = () => {
 
   const allowedTypes = ["application/pdf", "text/plain", "application/msword"];
 
-  useEffect(() => {
-    handleAddFiles();
-  }, [selectedFiles]);
+  const handleUploadFiles = async (filesToUpload) => {
+    console.log("Uploading files...", filesToUpload);
+    if (filesToUpload.length === 0) return;
+    console.log("filesToUpload -->", filesToUpload);
 
-  const handleAddFiles = async () => {
-    if (selectedFiles.length === 0) return;
+    for (const selectedFile of filesToUpload) {
+      // Creating form data
+      const formData = new FormData();
+      formData.append("file", selectedFile.file);
 
-    // Creating form data
-    const formData = new FormData();
-    selectedFiles.forEach((selectedFile) =>
-      formData.append("file", selectedFile),
-    );
+      try {
+        const res = await axios.post(`${apiURL}/upload`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (ProgressEvent) => {
+            const percentComplated = Math.round(
+              (ProgressEvent.loaded * 100) / ProgressEvent.total,
+            );
+            setSelectedFiles((prev) => {
+              return prev.map((file) => {
+                if (file.id === selectedFile.id) {
+                  return {
+                    ...file,
+                    progress: percentComplated,
+                    status: "uploading",
+                  };
+                }
+                return file;
+              });
+            });
+          },
+        });
 
-    const res = await axios.post(`${apiURL}/upload`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (ProgressEvent) => {
-        const percentComplated = Math.round(
-          (ProgressEvent.loaded * 100) / ProgressEvent.total,
-        );
-        setProgress(percentComplated);
-      },
-    });
+        console.log("API response -->", res.data);
+
+        setSelectedFiles((prev) => {
+          return prev.map((file) => {
+            if (file.id === selectedFile.id) {
+              return {
+                ...file,
+                progress: 100,
+                status: "uploaded",
+              };
+            }
+            return file;
+          });
+        });
+      } catch (err) {
+        console.log(err);
+        setSelectedFiles((prev) => {
+          return prev.map((file) => {
+            if (file.id === selectedFile.id) {
+              return {
+                ...file,
+                progress: 0,
+                status: "error",
+              };
+            }
+            return file;
+          });
+        });
+      }
+    }
   };
 
   const handleBrowseFiles = () => {
@@ -78,7 +118,19 @@ const UploadFile = () => {
     }
     console.log("valid files", validFiles);
     if (validFiles.length === 0) return;
-    setSelectedFiles(validFiles);
+
+    // Formatting the valid files to be stored in state
+    const formattedFiles = validFiles.map((file) => {
+      return {
+        id: crypto.randomUUID(),
+        file,
+        status: "pending",
+        progress: 0,
+      };
+    });
+    setSelectedFiles(formattedFiles);
+
+    handleUploadFiles(formattedFiles);
   };
 
   return (
@@ -109,7 +161,7 @@ const UploadFile = () => {
             ref={inputRef}
             type="file"
             className="hidden"
-            // multiple
+            multiple
             accept=".pdf, .txt, .doc, .docs"
             onChange={handleFileChange}
           />
@@ -121,36 +173,11 @@ const UploadFile = () => {
           </button>
 
           <p className="text-xs md:text-sm text-center">
-            PDF, Wordpad or Text, Max 100 MB each.
+            PDF, Wordpad or Text, Max 2 MB each.
           </p>
         </div>
 
-        {/* Track the prgress of files */}
-        {selectedFiles.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <h2 className="text-sm font-bold mt-2">Uploading files</h2>
-            <div className="flex gap-2 mt-2 items-center">
-              <File className="w-4 h-4" />
-              <div className="flex flex-col items-center justify-center"></div>
-              <div className="w-full h-1.5 rounded-lg bg-gray-300">
-                <div
-                  className="w-full h-full bg-black"
-                  style={{ width: `${progress}%` }}
-                ></div>
-                <div className="text-sm text-black text-center">
-                  {progress}%
-                </div>
-              </div>
-              <div>
-                {progress < 100 ? (
-                  <X className="w-5 h-5 text-red-500 text-bold" />
-                ) : (
-                  <Check className="w-5 h-5 text-green-500 text-bold" />
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        
         {/* PENDING: PROGRESS TRACKING AND CANCELLING THE UPLOAD */}
         <div className="text-red-500 font-semibold">
           {inValidFiles.map((invalidFile) => {
@@ -161,6 +188,44 @@ const UploadFile = () => {
             );
           })}
         </div>
+        {selectedFiles.length > 0 && (
+          <div className="flex flex-col gap-4 mb-5">
+            <h2 className="text-sm font-bold mt-2">Uploading files</h2>
+
+            {selectedFiles.map((item) => (
+              <div key={item.id} className=" p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <File className="w-4 h-4" />
+
+                  <p className="text-sm truncate">{item.file.name}</p>
+                </div>
+
+                <div className="w-full h-2 rounded-lg bg-gray-300 overflow-hidden">
+                  <div
+                    className="h-full bg-black transition-all duration-300"
+                    style={{
+                      width: `${item.progress}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs">{item.progress}%</p>
+
+                  <div>
+                    {item.status === "uploaded" ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : item.status === "error" ? (
+                      <X className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <p className="text-xs text-gray-500">Uploading...</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
