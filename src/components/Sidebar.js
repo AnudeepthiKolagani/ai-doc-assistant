@@ -1,17 +1,39 @@
 import { useSelector } from "react-redux";
 import Logo from "./Logo";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const Sidebar = () => {
-  const files = useSelector((state) => state.File.files);
-  const today = new Date().toDateString();
+  const [todayFiles, setTodayFiles] = useState([]); // Initialize with an empty array
+  const [previousFiles, setPreviousFiles] = useState([]); // Initialize with an empty array
 
-  const todayFiles = files?.filter(
-    (file) => new Date(file.uploadedAt).toDateString() === today,
-  );
-  const previousFiles = files?.filter(
-    (file) => new Date(file.uploadedAt).toDateString() !== today,
-  );
+  const formattedTodayDate = new Date().toISOString().split("T")[0];
+  const apiURL = process.env.REACT_APP_API_URL;
+
+  const fetchFiles = async () => {
+    try {
+      const response = await axios.get(`${apiURL}/files`);
+      console.log("API Response:", response.data);
+      const files = response.data.files || []; // Ensure files is an array
+      setTodayFiles(
+        files.filter(
+          (file) => file.uploadedAt.split("T")[0] === formattedTodayDate,
+        ),
+      );
+      setPreviousFiles(
+        files.filter(
+          (file) => file.uploadedAt.split("T")[0] !== formattedTodayDate,
+        ),
+      );
+    } catch (error) {
+      console.error("Error fetching files:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
 
   const getFileIcon = (type) => {
     switch (type) {
